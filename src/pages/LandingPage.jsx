@@ -1,6 +1,5 @@
 import React from 'react'
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -9,6 +8,7 @@ import { Star, ArrowLeft, MapPin, Phone, Mail, Clock } from 'lucide-react'
 import CountUp from 'react-countup'
 
 import { useLanguage } from '../contexts/LanguageContext'
+import api from '../services/api'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
@@ -37,9 +37,9 @@ const LandingPage = () => {
   const [services, setServices] = useState([])
 
 useEffect(() => {
-  axios.get('http://localhost/senior-nooralshams/api/services/viewServices.php')
+  api.get('/services/viewServices.php')
     .then(response => {
-      setServices(response.data.services || [])
+      setServices(response.services || [])
     })
     .catch(error => {
       console.error('Error fetching services:', error)
