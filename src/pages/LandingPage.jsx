@@ -35,17 +35,62 @@ const LandingPage = () => {
   ]
 
   const [services, setServices] = useState([])
+  const [servicesLoading, setServicesLoading] = useState(true)
+  const [servicesError, setServicesError] = useState(null)
 
-useEffect(() => {
-  api.get('/services/viewServices.php')
-    .then(response => {
-      setServices(response.services || [])
-    })
-    .catch(error => {
-      console.error('Error fetching services:', error)
-    })
-}, [])
+  // Default services to show when API fails
+  const defaultServices = [
+    {
+      id: 1,
+      name: 'قص وتصفيف الشعر',
+      description: 'خدمات قص وتصفيف الشعر بأحدث الطرق والتقنيات',
+      price: '50',
+      image_path: null
+    },
+    {
+      id: 2,
+      name: 'العناية بالبشرة',
+      description: 'جلسات العناية بالبشرة والتنظيف العميق',
+      price: '80',
+      image_path: null
+    },
+    {
+      id: 3,
+      name: 'المكياج',
+      description: 'خدمات المكياج للمناسبات الخاصة',
+      price: '100',
+      image_path: null
+    }
+  ]
 
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setServicesLoading(true)
+        setServicesError(null)
+        
+        const response = await api.get('/services/viewServices.php', {
+          timeout: 5000, // 5 second timeout
+        })
+        
+        if (response.services && Array.isArray(response.services)) {
+          setServices(response.services)
+        } else {
+          // If no services returned, use default services
+          setServices(defaultServices)
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error)
+        setServicesError(error.message)
+        // Use default services when API fails
+        setServices(defaultServices)
+      } finally {
+        setServicesLoading(false)
+      }
+    }
+
+    fetchServices()
+  }, [])
 
   const testimonials = [
     {
@@ -202,49 +247,70 @@ useEffect(() => {
       </p>
     </motion.div>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-  {services.slice(0, 3).map((service, index) => (
-    <motion.div
-      key={service.id}
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: index * 0.2 }}
-      viewport={{ once: true }}
-      className="card overflow-hidden group hover:scale-105"
-    >
-      <div className="relative overflow-hidden">
-        <img 
-          src={service.image_path ? `http://localhost/seniorII/${service.image_path}` : 'https://via.placeholder.com/300x200?text=No+Image'} 
-          alt={service.name}
-          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-        />
-        <div className="absolute top-4 right-4 bg-primary-200 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {service.price} ₪
-        </div>
+    {servicesLoading ? (
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-200"></div>
+        <p className="mt-4 text-gray-600">جاري تحميل الخدمات...</p>
       </div>
+    ) : (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {services.slice(0, 3).map((service, index) => (
+            <motion.div
+              key={service.id}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              viewport={{ once: true }}
+              className="card overflow-hidden group hover:scale-105"
+            >
+              <div className="relative overflow-hidden">
+                <img 
+                  src={service.image_path ? `http://localhost/seniorII/${service.image_path}` : 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=300&h=200'} 
+                  alt={service.name}
+                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=300&h=200'
+                  }}
+                />
+                <div className="absolute top-4 right-4 bg-primary-200 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  {service.price} ₪
+                </div>
+              </div>
 
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-3">{service.name}</h3>
-        <p className="text-gray-600 mb-4">{service.description}</p>
-        <Link 
-          to="/register" 
-          className="inline-flex items-center text-primary-200 hover:text-primary-300 font-medium group"
-        >
-          احجزي الآن
-          <ArrowLeft className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
-    </motion.div>
-  ))}
-</div>
-<div className="text-center mt-10">
-  <Link
-    to="/services"
-    className="inline-block bg-primary-200 text-white px-6 py-3 rounded-full shadow hover:bg-primary-300 transition"
-  >
-    مشاهدة كل الخدمات
-  </Link>
-</div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{service.name}</h3>
+                <p className="text-gray-600 mb-4">{service.description}</p>
+                <Link 
+                  to="/register" 
+                  className="inline-flex items-center text-primary-200 hover:text-primary-300 font-medium group"
+                >
+                  احجزي الآن
+                  <ArrowLeft className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {servicesError && (
+          <div className="text-center mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800">
+              تم عرض الخدمات الافتراضية. يرجى التأكد من تشغيل الخادم للحصول على أحدث الخدمات.
+            </p>
+          </div>
+        )}
+        
+        <div className="text-center mt-10">
+          <Link
+            to="/services"
+            className="inline-block bg-primary-200 text-white px-6 py-3 rounded-full shadow hover:bg-primary-300 transition"
+          >
+            مشاهدة كل الخدمات
+          </Link>
+        </div>
+      </>
+    )}
   </div>
 </section>
 
